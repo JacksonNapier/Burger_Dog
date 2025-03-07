@@ -134,6 +134,9 @@ while running:
         score += burger_points
         burgers_eaten += 1
 
+        burger_rect.topleft = (random.randint(0 , WINDOW_WIDTH - 32), BUFFER_DISTANCE)
+        burger_velocity += BURGER_ACCELERATION
+
         boost_level += 25
         if boost_level > STARTING_BOOST_LEVEL:
             boost_level = STARTING_BOOST_LEVEL
