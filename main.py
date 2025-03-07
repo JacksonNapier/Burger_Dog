@@ -33,11 +33,26 @@ WHITE = (255, 255, 255)
 
 font = pygame.font.Font("WashYourHand.ttf", 32)
 
-points_text = font.render("Burger Points: " + str(burger_points), True, ORANGE)
+def prep_text(text: str, background_color: tuple[int, int, int], **locations):
+    text_to_return = font.render(text, True, background_color(0, 0, 0))
+    rect = text_to_return.get_rect()
+    for location:
+        if location == "topleft":
+            rect.topleft = locations["topleft"]
+        elif location == "centerx":
+            rect.centerx = locations["centerx"]
+        elif location == "y":
+            rect.y = locations["y"]
+        elif location == "topright":
+            rect.topright = locations["topright"]
+        elif location == "center":
+            rect.center = locations["center"]
+
+points_text = font.render("Burger Points: " + {burger_points}, True, ORANGE)
 points_rect = points_text.get_rect()
 points_rect.topleft = (10, 10)
 
-score_text = font.render("Score: " + str(score), True, ORANGE)
+score_text = font.render("Score: " + {score}, True, ORANGE)
 score_rect = score_text.get_rect()
 score_rect.topleft = (10, 50)
 
@@ -46,28 +61,27 @@ title_rect = title_text.get_rect()
 title_rect.centerx = WINDOW_WIDTH//2
 title_rect.y = 10
 
-eaten_text = font.render("Burgers Eaten: " + str(burgers_eaten), True, ORANGE)
+eaten_text = font.render("Burgers Eaten: " + {burgers_eaten}, True, ORANGE)
 eaten_rect = eaten_text.get_rect()
 eaten_rect.centerx = WINDOW_WIDTH//2
 eaten_rect.y = 50
 
-lives_text = font.render("Lives: " + str(player_lives), True, ORANGE)
+lives_text = font.render("Lives: " + {player_lives}, True, ORANGE)
 lives_rect = lives_text.get_rect()
 lives_rect.topright = (WINDOW_WIDTH - 10, 10)
 
-boost_text = font.render("Boost: " + str(boost_level), True, ORANGE)
+boost_text = font.render("Boost: " + {boost_level}, True, ORANGE)
 boost_rect = boost_text.get_rect()
 boost_rect.topright = (WINDOW_WIDTH - 10, 50)
 
-game_over_text = font.render("FINAL SCORE: " + str(score), True, ORANGE)
+game_over_text = font.render("FINAL SCORE: " + {score}, True, ORANGE)
 game_over_rect = game_over_text.get_rect()
 game_over_rect.center = (WINDOW_WIDTH//2, WINDOW_HEIGHT//2)
 
-continue_text = font.render("Press any key if you want to play again", True, ORANGE)
+continue_text = font.render("Press Any Key to Play Again", True, ORANGE)
 continue_rect = continue_text.get_rect()
 continue_rect.center = (WINDOW_WIDTH//2, WINDOW_HEIGHT//2 + 64)
 
-# Set sounds and music
 bark_sound = pygame.mixer.Sound("bark_sound.wav")
 bark_sound.set_volume(0.1)
 
@@ -90,14 +104,16 @@ burger_image = pygame.image.load("burger.png")
 burger_rect = burger_image.get_rect()
 burger_rect.topleft = (random.randint(0, WINDOW_WIDTH - 32), -BUFFER_DISTANCE)
 
-pygame.mixer.music.play(-1, 0.0)
+pygame.mixer.music.play()
 running = True
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+is_paused = False
 
-    keys = pygame.key.get_pressed()
+    for pygame.event.get():
+        if event.type = pygame.QUIT:
+            running = False
+        break
+
+keys = pygame.key.get_pressed()
     if (keys[pygame.K_LEFT] or keys[pygame.K_a]) and player_rect.left > 0:
         player_rect.x -= player_velocity
         player_image = player_image_left
@@ -147,6 +163,7 @@ while running:
     lives_text = font.render("Lives: " + str(player_lives), True, ORANGE)
     boost_text = font.render("Boost: " + str(boost_level), True, ORANGE)
 
+    global game_over_text, is_paused, score, burgers_eaten, player_lives, boost_level, burger_velocity, running
     if player_lives == 0:
         pygame.mixer.music.stop()
 
@@ -154,8 +171,23 @@ while running:
         continue_text = font.render("Press Any Key To Play Again", True, ORANGE)
         display_surface.blit(game_over_text, game_over_rect)
         display_surface.blit(continue_text, continue_rect)
-
         pygame.display.update()
+        pygame.mixer.music.stop()
+        is_paused = True
+        while is_paused:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    score = 0
+                    burgers_eaten = 0
+                    player_lives = PLAYER_STARTING_LIVES
+                    boost_level = STARTING_BOOST_LEVEL
+                    burger_velocity = STARTING_BURGER_VELOCITY
+                    pygame.mixer.music.play()
+                    is_paused = False
+                if event.type == pygame.QUIT:
+                    is_paused = False
+                    running = False
+
 
         is_paused = True
         while is_paused:
@@ -171,12 +203,7 @@ while running:
 
                     is_paused = False
 
-                if event.type == pygame.QUIT:
-                    is_paused = False
-                    running = False
-
     display_surface.fill(BLACK)
-
     display_surface.blit(points_text, points_rect)
     display_surface.blit(score_text, score_rect)
     display_surface.blit(title_text, title_rect)
@@ -190,5 +217,16 @@ while running:
 
     pygame.display.update()
     clock.tick(FPS)
+
+while running:
+    check_quit()
+    move_player()
+    move_burger()
+    handle_miss()
+    check_collisions()
+    update_hud()
+    check_game_over()
+    display_hud()
+    handle_clock()
 
 pygame.quit()
